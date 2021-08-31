@@ -1,10 +1,12 @@
 package person.shark.stock.worker.stock;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-import org.mozilla.universalchardet.UniversalDetector;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import person.shark.stock.pojo.StockDO;
 import person.shark.stock.util.StringUtil;
 import person.shark.stock.worker.http.HttpRequestWorker;
@@ -12,139 +14,118 @@ import person.shark.stock.worker.http.HttpRequestWorker;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 
 public class StockWorker {
 
-//    public List<StockDO> findStockList() throws IOException, NoSuchAlgorithmException, KeyManagementException {
-//        HttpRequestWorker httpRequestWorker = new HttpRequestWorker();
-//        String url = "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_quotes";
-//        String response = httpRequestWorker.sendHttpsGetRequest(url);
-//        Gson gson = new Gson();
-//        List<StockDO> stockList = gson.fromJson(response, new TypeToken<List<StockDO>>(){}.getType());
-//        return stockList;
-//    }
+    public List<StockDO> findStockList() throws IOException, NoSuchAlgorithmException, KeyManagementException, CsvValidationException {
+        HttpRequestWorker httpRequestWorker = new HttpRequestWorker();
+        String url = "https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL?response=open_data";
+        String response = httpRequestWorker.sendHttpsGetRequest(url);
+        StringReader reader = new StringReader(response);
+        CSVReader csvReader = new CSVReader(reader);
+        BigDecimal minDividendYield = new BigDecimal(0.5);
 
-
-    public List<StockDO> findStockList() throws IOException, CsvValidationException {
         List<StockDO> stockList = new ArrayList<>();
-        File file = new File("file");
-        File[] stockCsvFileArray = file.listFiles();
-        for(File stockCsvFile: stockCsvFileArray) {
-            System.out.println("fileName: " + stockCsvFile.getName());
-            String encode = detectFileEncode(stockCsvFile);
-            FileReader fileReader = new FileReader(stockCsvFile.getAbsoluteFile(), Charset.forName(encode));
-            CSVReader csvReader = new CSVReader(fileReader);
-            String[] record;
-            int index = 0;
-            while ((record = csvReader.readNext()) != null) {
-                if(index != 0) {
-                    StockDO stockDO = new StockDO();
-                    stockDO.setName(record[3]);
-                    stockDO.setRecentOneYearPayBack(Double.parseDouble(record[5]));
-                    stockDO.setRecentTwoYearPayBack(Double.parseDouble(record[6]));
-                    stockDO.setRecentThreeYearPayBack(Double.parseDouble(record[7]));
-                    stockDO.setRecentFourYearPayBack(Double.parseDouble(record[8]));
-                    stockDO.setPrice(Double.parseDouble(record[20]));
-                    stockList.add(stockDO);
+        String[] record;
+        int index = 0;
+        while ((record = csvReader.readNext()) != null) {
+            if (index != 0) {
+                String price = record[7];
+                if (StringUtil.isEmpty(price)) {
+                    continue;
                 }
-                index ++;
+                StockDO stock = new StockDO();
+                stock.setId(record[0]);
+                stock.setPrice(new BigDecimal(price));
+                stock = findStockDividendInfo(stock);
+//                if (stock.getDividend1() != null) {
+//                    BigDecimal dividendYield = stock.getDividend1().divide(stock.getPrice(), 4, RoundingMode.FLOOR);
+//                    if (dividendYield.compareTo(minDividendYield) >= 0) {
+//                        stock.setName(record[1]);
+//                        stockList.add(stock);
+//                        System.out.println(new Gson().toJson(stock));
+//                    }
+//                }
+                stock.setName(record[1]);
+                stockList.add(stock);
+                System.out.println(new Gson().toJson(stock));
             }
+            index++;
         }
-
         return stockList;
     }
 
-    private String detectFileEncode(File file) {
-        byte[] buff = new byte[4096];
-        String encode = null;
-        try(FileInputStream fileInputStream = new FileInputStream(file)) {
-            UniversalDetector detector = new UniversalDetector(null);
-            int read;
-            while ((read = fileInputStream.read(buff)) > 0 && !detector.isDone()) {
-                detector.handleData(buff, 0, read);
+    private StockDO findStockDividendInfo(StockDO stock) {
+        String url = "https://tw.stock.yahoo.com/d/s/dividend_" + stock.getId() + ".html";
+//        System.out.println("url: " + url);
+        int year = Calendar.getInstance().get(Calendar.YEAR);
+        try {
+            Document document = Jsoup.connect(url).get();
+            Elements yearDividendTrElements = document.getElementsByTag("tbody").get(3)
+                    .getElementsByTag("tr");
+            int trIndex = 0;
+            for (Element yearDividendTrElement : yearDividendTrElements) {
+                if (trIndex > 0) {
+                    Elements yearDividendInfoTdElements = yearDividendTrElement.getElementsByTag("td");
+                    int dividendYear = Integer.valueOf(yearDividendInfoTdElements.get(1).text().split("-")[0]);
+                    BigDecimal dividend = new BigDecimal(yearDividendInfoTdElements.get(6).text());
+                    int yearDifference = year - dividendYear;
+                    switch (yearDifference) {
+                        case 0:
+                            if (stock.getDividend1() == null) {
+                                stock.setDividend1(dividend);
+                            } else {
+                                stock.setDividend1(stock.getDividend1().add(dividend));
+                            }
+                            break;
+                        case 1:
+                            if (stock.getDividend2() == null) {
+                                stock.setDividend2(dividend);
+                            } else {
+                                stock.setDividend2(stock.getDividend2().add(dividend));
+                            }
+                            break;
+                        case 2:
+                            if (stock.getDividend3() == null) {
+                                stock.setDividend3(dividend);
+                            } else {
+                                stock.setDividend3(stock.getDividend3().add(dividend));
+                            }
+                            break;
+                        case 3:
+                            if (stock.getDividend4() == null) {
+                                stock.setDividend4(dividend);
+                            } else {
+                                stock.setDividend4(stock.getDividend4().add(dividend));
+                            }
+                            break;
+                    }
+                }
+                trIndex++;
             }
-            detector.dataEnd();
-            encode = detector.getDetectedCharset();
-            if (StringUtil.isEmpty(encode)) {
-                encode = "UTF-8";
-            }
-            detector.reset();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
         }
-        return encode;
+        return stock;
     }
 
-    public List<StockDO> filterByPayBackRate(List<StockDO> stockList, double payBackRate) {
-        List<StockDO> filterStockList = new ArrayList<>();
-        for(StockDO stock: stockList) {
-            if(new BigDecimal(stock.getPrice()).compareTo(BigDecimal.ZERO) == 0) {
-                continue;
-            }
-            BigDecimal fourYearAveragePayBackRate = new BigDecimal(stock.getRecentOneYearPayBack())
-                    .add(new BigDecimal(stock.getRecentTwoYearPayBack()))
-                    .add(new BigDecimal(stock.getRecentThreeYearPayBack()))
-                    .add(new BigDecimal(stock.getRecentFourYearPayBack()))
-                    .divide(new BigDecimal(4), 4, RoundingMode.FLOOR)
-                    .divide(new BigDecimal(stock.getPrice()), 4, RoundingMode.FLOOR);
-
-            if(new BigDecimal(payBackRate).compareTo(fourYearAveragePayBackRate) == -1) {
-                stock.setPayBackRate(fourYearAveragePayBackRate.doubleValue());
-                filterStockList.add(stock);
-            }
-        }
-        return filterStockList;
-    }
-
-    public List<StockDO> filterByPayBackStandardDeviationRate(List<StockDO> stockList, double payBackStandardDeviationRateCondition) {
-        List<StockDO> filterStockList = new ArrayList<>();
-        for(StockDO stock: stockList) {
-            BigDecimal packBackAverage = new BigDecimal(stock.getRecentOneYearPayBack())
-                    .add(new BigDecimal(stock.getRecentTwoYearPayBack()))
-                    .add(new BigDecimal(stock.getRecentThreeYearPayBack()))
-                    .add(new BigDecimal(stock.getRecentFourYearPayBack()))
-                    .divide(new BigDecimal(4), 4, RoundingMode.FLOOR);
-            BigDecimal recentOneYearPayBackDeviation = new BigDecimal(stock.getRecentOneYearPayBack()).subtract(packBackAverage);
-            BigDecimal recentTwoYearPayBackDeviation = new BigDecimal(stock.getRecentTwoYearPayBack()).subtract(packBackAverage);
-            BigDecimal recentThreeYearPayBackDeviation = new BigDecimal(stock.getRecentThreeYearPayBack()).subtract(packBackAverage);
-            BigDecimal recentFourYearPayBackDeviation = new BigDecimal(stock.getRecentFourYearPayBack()).subtract(packBackAverage);
-
-            BigDecimal payBackStandardDeviation = new BigDecimal(Math.sqrt(BigDecimal.ZERO
-                    .add(recentOneYearPayBackDeviation.multiply(recentOneYearPayBackDeviation))
-                    .add(recentTwoYearPayBackDeviation.multiply(recentTwoYearPayBackDeviation))
-                    .add(recentThreeYearPayBackDeviation.multiply(recentThreeYearPayBackDeviation))
-                    .add(recentFourYearPayBackDeviation.multiply(recentFourYearPayBackDeviation))
-                    .divide(new BigDecimal(4), 4, RoundingMode.FLOOR).doubleValue()
-            ));
-            BigDecimal payBackStandardDeviationRate = payBackStandardDeviation.divide(packBackAverage, 4, RoundingMode.FLOOR);
-            if(payBackStandardDeviationRate.compareTo(new BigDecimal(payBackStandardDeviationRateCondition)) == 1) {
-                continue;
-            }
-            stock.setPayBackStandardDeviationRate(payBackStandardDeviationRate.doubleValue());
-            filterStockList.add(stock);
-
-        }
-        return filterStockList;
-    }
-
-    public List<StockDO> sortByPayBackRate(List<StockDO> stockList) {
-        stockList.sort(Comparator.comparing(stock -> new BigDecimal(stock.getPayBackRate() * -1)));
+    public List<StockDO> sortByDividendYield(List<StockDO> stockList) {
+        stockList.sort(Comparator.comparing(stock -> stock.getDividendYield1().multiply(new BigDecimal(-1))));
         return stockList;
     }
 
     public void print(List<StockDO> stockList) {
         Gson gson = new Gson();
-        for(StockDO stock: stockList) {
+        for (StockDO stock : stockList) {
             System.out.println(gson.toJson(stock));
         }
     }
-
 }

@@ -4,22 +4,29 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 @Data
-public class StockDO implements Serializable {
+public class StockDO {
 
-    @SerializedName("SecuritiesCompanyCode")
     private String id;
-    @SerializedName("CompanyName")
-    private String name;
-    @SerializedName("Close")
-    private Double price;
 
-    private Double recentOneYearPayBack;
-    private Double recentTwoYearPayBack;
-    private Double recentThreeYearPayBack;
-    private Double recentFourYearPayBack;
-    private Double payBackRate;
-    private Double payBackStandardDeviationRate;
+    private String name;
+
+    private BigDecimal price;
+
+    private BigDecimal dividend1;
+    private BigDecimal dividendYield1;
+
+    private BigDecimal dividend2;
+    private BigDecimal dividendYield2;
+
+    private BigDecimal dividend3;
+    private BigDecimal dividendYield3;
+
+    private BigDecimal dividend4;
+    private BigDecimal dividendYield4;
+
+    private BigDecimal dividendYieldStandardDeviationRate;
 
 }

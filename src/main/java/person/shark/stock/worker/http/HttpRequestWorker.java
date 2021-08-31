@@ -47,7 +47,7 @@ public class HttpRequestWorker {
         StringBuffer stringBuffer = new StringBuffer();
         String line;
         while ((line = bufferedReader.readLine()) != null) {
-            stringBuffer.append(line);
+            stringBuffer.append(line).append("\n");
         }
 
 

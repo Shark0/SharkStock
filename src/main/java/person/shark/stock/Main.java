@@ -14,9 +14,7 @@ public class Main {
     public static void main(String[] argv) throws IOException, KeyManagementException, NoSuchAlgorithmException, CsvValidationException {
         StockWorker stockWorker = new StockWorker();
         List<StockDO> stockList = stockWorker.findStockList();
-        stockList = stockWorker.filterByPayBackRate(stockList, 0.05);
-        stockList = stockWorker.filterByPayBackStandardDeviationRate(stockList, 0.35);
-        stockList = stockWorker.sortByPayBackRate(stockList);
+        stockList = stockWorker.sortByDividendYield(stockList);
         stockWorker.print(stockList);
     }
 }
