@@ -15,18 +15,7 @@ public class StockDO {
 
     private BigDecimal price;
 
-    private BigDecimal dividend1;
-    private BigDecimal dividendYield1;
+    private BigDecimal dividend;
 
-    private BigDecimal dividend2;
-    private BigDecimal dividendYield2;
-
-    private BigDecimal dividend3;
-    private BigDecimal dividendYield3;
-
-    private BigDecimal dividend4;
-    private BigDecimal dividendYield4;
-
-    private BigDecimal dividendYieldStandardDeviationRate;
-
+    private BigDecimal dividendYield;
 }

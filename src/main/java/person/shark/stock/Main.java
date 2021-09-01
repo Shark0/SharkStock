@@ -1,5 +1,6 @@
 package person.shark.stock;
 
+import com.google.gson.Gson;
 import com.opencsv.exceptions.CsvValidationException;
 import person.shark.stock.pojo.StockDO;
 import person.shark.stock.worker.stock.StockWorker;

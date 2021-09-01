@@ -3,129 +3,87 @@ package person.shark.stock.worker.stock;
 import com.google.gson.Gson;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import person.shark.stock.pojo.StockDO;
-import person.shark.stock.util.StringUtil;
+import person.shark.stock.pojo.YahooStockDO;
 import person.shark.stock.worker.http.HttpRequestWorker;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringReader;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 
 public class StockWorker {
 
-    public List<StockDO> findStockList() throws IOException, NoSuchAlgorithmException, KeyManagementException, CsvValidationException {
+    public List<StockDO> findStockList() throws IOException, KeyManagementException, NoSuchAlgorithmException, CsvValidationException {
+        List<StockDO> stockList = new ArrayList<>();
         HttpRequestWorker httpRequestWorker = new HttpRequestWorker();
         String url = "https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL?response=open_data";
         String response = httpRequestWorker.sendHttpsGetRequest(url);
         StringReader reader = new StringReader(response);
         CSVReader csvReader = new CSVReader(reader);
-        BigDecimal minDividendYield = new BigDecimal(0.5);
-
-        List<StockDO> stockList = new ArrayList<>();
         String[] record;
         int index = 0;
         while ((record = csvReader.readNext()) != null) {
             if (index != 0) {
-                String price = record[7];
-                if (StringUtil.isEmpty(price)) {
-                    continue;
-                }
                 StockDO stock = new StockDO();
                 stock.setId(record[0]);
-                stock.setPrice(new BigDecimal(price));
-                stock = findStockDividendInfo(stock);
-//                if (stock.getDividend1() != null) {
-//                    BigDecimal dividendYield = stock.getDividend1().divide(stock.getPrice(), 4, RoundingMode.FLOOR);
-//                    if (dividendYield.compareTo(minDividendYield) >= 0) {
-//                        stock.setName(record[1]);
-//                        stockList.add(stock);
-//                        System.out.println(new Gson().toJson(stock));
-//                    }
-//                }
                 stock.setName(record[1]);
-                stockList.add(stock);
-                System.out.println(new Gson().toJson(stock));
+                if(!stock.getId().startsWith("0")) {
+                    YahooStockDO yahooStock = findYahooStock(stock.getId());
+                    if (yahooStock != null &&
+                            yahooStock.getSummaryDetail() != null &&
+                            yahooStock.getSummaryDetail().getDividendYield() != null &&
+                            yahooStock.getSummaryDetail().getDividendYield().getRaw() != null &&
+                            yahooStock.getSummaryDetail().getDividendRate() != null &&
+                            yahooStock.getSummaryDetail().getDividendRate().getRaw() != null
+                    ) {
+                        stock.setPrice(yahooStock.getPrice().getRegularMarketPrice().getRaw());
+                        stock.setDividend(yahooStock.getSummaryDetail().getDividendRate().getRaw());
+                        stock.setDividendYield(yahooStock.getSummaryDetail().getDividendYield().getRaw());
+                        stockList.add(stock);
+                    }
+                }
             }
             index++;
         }
         return stockList;
     }
 
-    private StockDO findStockDividendInfo(StockDO stock) {
-        String url = "https://tw.stock.yahoo.com/d/s/dividend_" + stock.getId() + ".html";
-//        System.out.println("url: " + url);
-        int year = Calendar.getInstance().get(Calendar.YEAR);
+    private YahooStockDO findYahooStock(String stockId) {
         try {
-            Document document = Jsoup.connect(url).get();
-            Elements yearDividendTrElements = document.getElementsByTag("tbody").get(3)
-                    .getElementsByTag("tr");
-            int trIndex = 0;
-            for (Element yearDividendTrElement : yearDividendTrElements) {
-                if (trIndex > 0) {
-                    Elements yearDividendInfoTdElements = yearDividendTrElement.getElementsByTag("td");
-                    int dividendYear = Integer.valueOf(yearDividendInfoTdElements.get(1).text().split("-")[0]);
-                    BigDecimal dividend = new BigDecimal(yearDividendInfoTdElements.get(6).text());
-                    int yearDifference = year - dividendYear;
-                    switch (yearDifference) {
-                        case 0:
-                            if (stock.getDividend1() == null) {
-                                stock.setDividend1(dividend);
-                            } else {
-                                stock.setDividend1(stock.getDividend1().add(dividend));
-                            }
-                            break;
-                        case 1:
-                            if (stock.getDividend2() == null) {
-                                stock.setDividend2(dividend);
-                            } else {
-                                stock.setDividend2(stock.getDividend2().add(dividend));
-                            }
-                            break;
-                        case 2:
-                            if (stock.getDividend3() == null) {
-                                stock.setDividend3(dividend);
-                            } else {
-                                stock.setDividend3(stock.getDividend3().add(dividend));
-                            }
-                            break;
-                        case 3:
-                            if (stock.getDividend4() == null) {
-                                stock.setDividend4(dividend);
-                            } else {
-                                stock.setDividend4(stock.getDividend4().add(dividend));
-                            }
-                            break;
-                    }
-                }
-                trIndex++;
-            }
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder()
+                    .url("https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/v2/get-summary?symbol=" + stockId + ".tw")
+                    .get()
+                    .addHeader("x-rapidapi-host", "apidojo-yahoo-finance-v1.p.rapidapi.com")
+                    .addHeader("x-rapidapi-key", "aae42a4805msh1f83c3aab7c5452p1bc18bjsn9d6c72c432ab")
+                    .build();
+            Response response = client.newCall(request).execute();
+            String result = response.body().string();
+            YahooStockDO yahooStock = new Gson().fromJson(result, YahooStockDO.class);
+            return yahooStock;
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (IndexOutOfBoundsException e) {
-            e.printStackTrace();
         }
-        return stock;
+        return null;
     }
 
     public List<StockDO> sortByDividendYield(List<StockDO> stockList) {
-        stockList.sort(Comparator.comparing(stock -> stock.getDividendYield1().multiply(new BigDecimal(-1))));
+        stockList.sort(Comparator.comparing(stock -> stock.getDividendYield().multiply(new BigDecimal(-1))));
         return stockList;
     }
 
     public void print(List<StockDO> stockList) {
-        Gson gson = new Gson();
         for (StockDO stock : stockList) {
-            System.out.println(gson.toJson(stock));
+            System.out.println("編號: " + stock.getId() + ", 名稱: " + stock.getName() + ", 價錢: " + stock.getPrice() +
+                    ", 股利: " + stock.getDividend() + ", 殖利率: " + stock.getDividendYield());
         }
     }
 }

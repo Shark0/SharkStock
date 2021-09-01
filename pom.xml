@@ -29,13 +29,6 @@
             <version>5.5.1</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.googlecode.juniversalchardet/juniversalchardet -->
-        <dependency>
-            <groupId>com.googlecode.juniversalchardet</groupId>
-            <artifactId>juniversalchardet</artifactId>
-            <version>1.0.3</version>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -50,11 +43,12 @@
             <version>4.5.13</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
+        <!-- https://mvnrepository.com/artifact/com.squareup.okhttp/okhttp -->
         <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.14.2</version>
+            <groupId>com.squareup.okhttp</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>2.7.5</version>
         </dependency>
+
     </dependencies>
 </project>
