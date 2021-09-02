@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.HashMap;
 
 @Data
 public class StockDO {
@@ -18,4 +19,6 @@ public class StockDO {
     private BigDecimal dividend;
 
     private BigDecimal dividendYield;
+
+    private HashMap<String, BigDecimal> dividendMap;
 }
