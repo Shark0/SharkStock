@@ -16,9 +16,7 @@ public class StockDO {
 
     private BigDecimal price;
 
-    private BigDecimal dividend;
+    private BigDecimal dividendRate;
 
     private BigDecimal dividendYield;
-
-    private HashMap<String, BigDecimal> dividendMap;
 }
