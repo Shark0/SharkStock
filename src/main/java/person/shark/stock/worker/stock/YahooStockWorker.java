@@ -2,8 +2,6 @@ package person.shark.stock.worker.stock;
 
 import com.google.gson.Gson;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import person.shark.stock.pojo.StockDO;
 import person.shark.stock.pojo.YahooStockDO;
 import person.shark.stock.worker.http.HttpRequestWorker;
 
@@ -17,7 +15,6 @@ public class YahooStockWorker implements Runnable{
     private String stockId;
 
     private YahooStockListener yahooStockListener;
-
 
     @Override
     public void run() {
@@ -33,13 +30,7 @@ public class YahooStockWorker implements Runnable{
             } else {
                 yahooStockListener.callBack(stockId, null);
             }
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            yahooStockListener.callBack(stockId, null);
-        } catch (IOException e) {
-            e.printStackTrace();
-            yahooStockListener.callBack(stockId, null);
-        } catch (KeyManagementException e) {
+        } catch (NoSuchAlgorithmException | KeyManagementException | IOException e) {
             e.printStackTrace();
             yahooStockListener.callBack(stockId, null);
         }
@@ -47,15 +38,16 @@ public class YahooStockWorker implements Runnable{
 
     public YahooStockDO findYahooStockById(String stockId) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         //https://query2.finance.yahoo.com/v10/finance/quoteSummary/1101.tw?modules=assetProfile%2CsummaryProfile%2CsummaryDetail%2CesgScores%2Cprice%2CincomeStatementHistory%2CincomeStatementHistoryQuarterly%2CbalanceSheetHistory%2CbalanceSheetHistoryQuarterly%2CcashflowStatementHistory%2CcashflowStatementHistoryQuarterly%2CdefaultKeyStatistics%2CfinancialData%2CcalendarEvents%2CsecFilings%2CrecommendationTrend%2CupgradeDowngradeHistory%2CinstitutionOwnership%2CfundOwnership%2CmajorDirectHolders%2CmajorHoldersBreakdown%2CinsiderTransactions%2CinsiderHolders%2CnetSharePurchaseActivity%2Cearnings%2CearningsHistory%2CearningsTrend%2CindustryTrend%2CindexTrend%2CsectorTrend
-        String url = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/" + stockId + ".tw?modules=summaryDetail";
+        String url = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/" + stockId + ".tw?modules=summaryDetail%2CdefaultKeyStatistics";
+        System.out.println("url = " + url);
         HttpRequestWorker httpRequestWorker = new HttpRequestWorker();
         String response = httpRequestWorker.sendHttpsGetRequest(url);
         Gson gson = new Gson();
-        YahooStockDO stock = gson.fromJson(response, YahooStockDO.class);
-        return stock;
+        YahooStockDO yahooStock = gson.fromJson(response, YahooStockDO.class);
+        return yahooStock;
     }
 
-    public static interface YahooStockListener {
-        public void callBack(String stockId, YahooStockDO yahooStock);
+    public interface YahooStockListener {
+        void callBack(String stockId, YahooStockDO yahooStock);
     }
 }

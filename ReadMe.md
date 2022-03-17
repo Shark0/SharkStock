@@ -1,0 +1,35 @@
+# Shark Stock
+## 資料來源
+* https://www.twse.com.tw
+* https://query2.finance.yahoo.com/v10/finance
+  * modules
+      * assetProfile
+      * summaryProfile
+      * summaryDetail
+      * esgScores
+      * price
+      * incomeStatementHistory
+      * incomeStatementHistoryQuarterly
+      * balanceSheetHistory
+      * balanceSheetHistoryQuarterly
+      * cashflowStatementHistory
+      * cashflowStatementHistoryQuarterly
+      * defaultKeyStatistics
+      * financialData
+      * calendarEvents
+      * secFilings
+      * recommendationTrend
+      * upgradeDowngradeHistory
+      * institutionOwnership
+      * fundOwnership
+      * majorDirectHolders
+      * majorHoldersBreakdown
+      * insiderTransactions
+      * insiderHolders
+      * netSharePurchaseActivity
+      * earnings
+      * earningsHistory
+      * earningsTrend
+      * industryTrend
+      * indexTrend
+      * sectorTrend

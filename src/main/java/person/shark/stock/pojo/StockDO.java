@@ -3,9 +3,7 @@ package person.shark.stock.pojo;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.HashMap;
 
 @Data
 public class StockDO {
@@ -19,4 +17,12 @@ public class StockDO {
     private BigDecimal dividendRate;
 
     private BigDecimal dividendYield;
+
+    private BigDecimal trailingEps;
+
+    private BigDecimal forwardEps;
+
+    private BigDecimal trailingPe;
+
+    private BigDecimal forwardPe;
 }
