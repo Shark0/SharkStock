@@ -18,7 +18,7 @@ public class Main {
 
         StockWorker stockWorker = new StockWorker();
         List<StockDO> stockList = stockWorker.findStockList();
-        stockList = stockWorker.filterByDividendYield(stockList, new BigDecimal(0.08));
+        stockList = stockWorker.filterByDividendYield(stockList, new BigDecimal("0.08"));
         stockList = stockWorker.filterByPe(stockList, new BigDecimal(50));
         stockList = stockWorker.sortByPe(stockList);
         stockWorker.saveToExcel(stockList);
