@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,8 +18,15 @@ public class ExcelWorker {
     public void saveToExcel(String fileName, List<StockDo> stockList) {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet();
-        List<String> titleList = List.of("Id", "Company", "Price", "Current Year Dividend Rate",
-                "The Previous Year Dividend Rate", "The Past Two Year Dividend Rate", "The Past Three Year Dividend Rate");
+
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        int thePreviousYear = currentYear - 1;
+        int thePastTwoYear = currentYear - 2;
+        int thePastThreeYear = currentYear - 3;
+
+        List<String> titleList = List.of("Id", "Company", "Price", currentYear + " Dividend Rate",
+                thePreviousYear + " Dividend Rate", thePastTwoYear + " Dividend Rate",
+                thePastThreeYear + " Dividend Rate");
         Row titleRow = sheet.createRow(0);
         for (int i = 0; i < titleList.size(); i++) {
             Cell cell = titleRow.createCell(i);

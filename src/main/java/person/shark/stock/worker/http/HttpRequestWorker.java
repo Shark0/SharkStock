@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
@@ -32,15 +33,13 @@ public class HttpRequestWorker {
         httpsURLConnection.connect();
 
         InputStream inputStream = httpsURLConnection.getInputStream();
-        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "utf-8");
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-        StringBuffer stringBuffer = new StringBuffer();
+        StringBuilder stringBuilder = new StringBuilder();
         String line;
         while ((line = bufferedReader.readLine()) != null) {
-            stringBuffer.append(line).append("\n");
+            stringBuilder.append(line).append("\n");
         }
-
-
-        return stringBuffer.toString();
+        return stringBuilder.toString();
     }
 }

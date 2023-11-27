@@ -1,26 +1,14 @@
 package person.shark.stock.worker.stock;
 
-import com.google.gson.Gson;
 import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvValidationException;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import person.shark.stock.pojo.StockDo;
 import person.shark.stock.util.StringUtil;
 import person.shark.stock.worker.http.HttpRequestWorker;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigDecimal;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StockWorker {
 
@@ -52,7 +40,7 @@ public class StockWorker {
                     stockList.add(stock);
                 }
                 index++;
-                Thread.sleep(100);
+                Thread.sleep(50);
             }
         } catch (Exception e) {
             e.printStackTrace();
