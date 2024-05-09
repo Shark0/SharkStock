@@ -4,12 +4,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import person.shark.stock.pojo.RevenueDo;
 import person.shark.stock.pojo.StockDo;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 
 public class JsoupWorker {
 
@@ -93,5 +97,41 @@ public class JsoupWorker {
             System.out.println("error stock id = " + stockDO.getId());
             e.printStackTrace();
         }
+    }
+
+    public List<RevenueDo> revenue(String stockCode) {
+        List<RevenueDo> revenueList = new ArrayList<>();
+        String url = "https://tw.stock.yahoo.com/quote/" + stockCode + "/revenue";
+        try {
+            Document document = Jsoup.connect(url).get();
+            Elements revenueContentElements = document.getElementsByClass("M(0) P(0) List(n)");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM");
+            if (revenueContentElements.size() != 0) {
+                Element ulElement = revenueContentElements.get(0);
+                Elements liElements = ulElement.getElementsByClass("List(n)");
+//                System.out.println("liElements.size(): " + liElements.size());
+                int i = 0;
+                for (Element liElement : liElements) {
+//                    System.out.println("i: " + i);
+                    Elements dateElements = liElement.getElementsByClass("W(65px) Ta(start)");
+                    RevenueDo revenueDo = new RevenueDo();
+                    String dateString = dateElements.get(0).text();
+//                    System.out.println("date: " + dateString);
+                    revenueDo.setDate(simpleDateFormat.parse(dateString));
+
+                    Element singleMonthElement = liElement.getElementsByTag("ul").get(0);
+                    String revenue = singleMonthElement.getElementsByTag("li").get(0).
+                            getElementsByTag("span").get(0).text().
+                            replace(",", "");
+//                    System.out.println("revenue: " + revenue);
+                    revenueDo.setRevenue(new BigDecimal(revenue));
+                    revenueList.add(revenueDo);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        revenueList.remove(0);
+        return revenueList;
     }
 }

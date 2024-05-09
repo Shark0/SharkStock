@@ -13,6 +13,6 @@ public class DownloadAllStockMain {
         StockWorker stockWorker = new StockWorker();
         List<StockDo> stockList = stockWorker.findStockList();
         ExcelWorker excelWorker = new ExcelWorker();
-        excelWorker.saveToExcel("ALL_STOCK.xlsx", stockList);
+        excelWorker.saveToExcel("all_stock.xlsx", stockList);
     }
 }
