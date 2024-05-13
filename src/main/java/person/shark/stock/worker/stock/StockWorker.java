@@ -1,6 +1,8 @@
 package person.shark.stock.worker.stock;
 
 import com.opencsv.CSVReader;
+import person.shark.stock.pojo.DividendDo;
+import person.shark.stock.pojo.RevenueDo;
 import person.shark.stock.pojo.StockDo;
 import person.shark.stock.util.StringUtil;
 import person.shark.stock.worker.http.HttpRequestWorker;
@@ -36,7 +38,10 @@ public class StockWorker {
                     stock.setId(stockId);
                     stock.setName(record[1]);
                     stock.setPrice(new BigDecimal(price));
-                    jsoupWorker.findYahooStockInfo(stock);
+                    List<DividendDo> divideList = jsoupWorker.dividend(stockId, 5);
+                    stock.setDividendList(divideList);
+                    List<RevenueDo> revenueList = jsoupWorker.revenue(stockId);
+                    stock.setRevenueList(revenueList);
                     stockList.add(stock);
                 }
                 index++;

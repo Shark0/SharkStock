@@ -1,107 +1,121 @@
 package person.shark.stock.worker.stock;
 
+import com.google.gson.Gson;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import person.shark.stock.pojo.DividendDo;
 import person.shark.stock.pojo.RevenueDo;
-import person.shark.stock.pojo.StockDo;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class JsoupWorker {
 
-    public void findYahooStockInfo(StockDo stockDO) {
-        String url = "https://tw.stock.yahoo.com/quote/" + stockDO.getId() + ".TW/dividend";
-        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-        int thePreviousYear = currentYear - 1;
-        int thePastTwoYear = currentYear - 2;
-        int thePastThreeYear = currentYear - 3;
-        BigDecimal thePreviousYearDividend = new BigDecimal("0");
+    public List<DividendDo> dividend(String stockCode, int yearCount) {
+        String url = "https://tw.stock.yahoo.com/quote/" + stockCode + ".TW/dividend";
+        System.out.println("url = " + url);
+        HashMap<Integer, BigDecimal> yearDividendMap = new HashMap<>();
         HashMap<Integer, BigDecimal> yearDividendRateMap = new HashMap<>();
+
+        int lastYear = Calendar.getInstance().get(Calendar.YEAR) - yearCount;
         try {
             Document document = Jsoup.connect(url).get();
             Elements dividendContentElements = document.getElementsByClass("M(0) P(0) List(n)");
+            System.out.println("dividendContentElements.size() = " + dividendContentElements.size());
             if (dividendContentElements.size() != 0) {
-                Element ulElement = dividendContentElements.get(0);
-                Elements liElements = ulElement.getElementsByTag("li");
-                for (Element liElement : liElements) {
-                    Elements yearElements = liElement.getElementsByClass("D(f) W(84px) Ta(start)");
+
+                Elements dividendElements = dividendContentElements.get(0).getElementsByClass("List(n)");
+                System.out.println("dividendElements.size() = " + dividendElements.size());
+
+                for (Element dividendRowElement : dividendElements) {
+                    Elements yearElements = dividendRowElement.getElementsByClass("D(f) Start(0) H(100%) Ai(c) Bgc(#fff) table-row:h_Bgc(#e7f3ff) Pstart(12px) Pend(12px) Bdrststart(4px) Bdrsbstart(4px) Pos(r) Bxz(bb) Z(2)");
                     if (yearElements.size() == 0) {
                         //no dividend info
-                        break;
+                        continue;
                     }
                     String yearText = yearElements.get(0).text();
+                    System.out.println("yearText = " + yearText);
+                    if("-".equalsIgnoreCase(yearText)) {
+                        continue;
+                    }
                     int year;
                     if (yearText.contains("Q") || yearText.contains("H")) {
                         year = Integer.parseInt(yearText.substring(0, 4));
                     } else {
                         year = Integer.parseInt(yearText);
                     }
-                    if (year < thePastThreeYear) {
+                    if (year < lastYear) {
                         break;
                     }
-                    Elements dividendElements = liElement.getElementsByClass("Fxg(1) Fxs(1) Fxb(0%) Ta(end) Mend($m-table-cell-space) Mend(0):lc Miw(62px)");
-                    String cashDividend = dividendElements.get(0).getElementsByTag("span").get(0).text();
-                    String stockDividend = dividendElements.get(1).getElementsByTag("span").get(0).text();
-                    String dividendRate = liElement.getElementsByClass("Fxg(1) Fxs(1) Fxb(0%) Ta(end) Mend($m-table-cell-space) Mend(0):lc Miw(70px)").get(0).getElementsByTag("span").get(0).text();
-                    System.out.println("id = " + stockDO.getId() + ", yearText = " + yearText + ", cashDividend = " + cashDividend + ", stockDividend= " + stockDividend + ", dividendRate = " + dividendRate);
-                    BigDecimal yearDividendRate = yearDividendRateMap.get(year);
-                    if (yearDividendRate == null) {
-                        yearDividendRate = new BigDecimal("0");
+                    Elements dividendInfoElements = dividendRowElement.getElementsByClass("Fxg(1) Fxs(1) Fxb(0%) Ta(end) Mend(0):lc Mend(12px) W(72px) Miw(72px)");
+                    String cashDividendText = dividendInfoElements.get(0).getElementsByTag("span").get(0).text();
+                    String stockDividendText = dividendInfoElements.get(1).getElementsByTag("span").get(0).text();
+
+                    BigDecimal dividend = new BigDecimal(0);
+                    if(!"-".equals(cashDividendText)) {
+                        dividend = dividend.add(new BigDecimal(cashDividendText));
                     }
-                    if (!dividendRate.equalsIgnoreCase("-")) {
-                        dividendRate = dividendRate.replace("%", "");
-                        yearDividendRate = yearDividendRate.add(new BigDecimal(dividendRate));
+                    if(!"-".equals(stockDividendText)) {
+                        dividend = dividend.add(new BigDecimal(stockDividendText));
+                    }
+
+                    BigDecimal yearDividend = yearDividendMap.get(year);
+                    if(yearDividend == null) {
+                        yearDividend = dividend;
+                    } else {
+                        yearDividend = yearDividend.add(dividend);
+                    }
+                    yearDividendMap.put(year, yearDividend);
+
+                    String dividendRateText = dividendInfoElements.get(2).getElementsByTag("span").get(0).text().replace("%", "");
+
+                    System.out.println("stockCode = " + stockCode + ", yearText = " + yearText + ", cashDividendText = " + cashDividendText +
+                            ", stockDividendText = " + stockDividendText + ", dividendRateText = " + dividendRateText);
+                    BigDecimal dividendRate = new BigDecimal(0);
+                    if(!"-".equals(dividendRateText)) {
+                        dividendRate = dividendRate.add(new BigDecimal(dividendRateText));
+                    }
+                    BigDecimal yearDividendRate = yearDividendRateMap.get(year);
+                    if(yearDividendRate == null) {
+                        yearDividendRate = dividendRate;
+                    } else {
+                        yearDividendRate = yearDividendRate.add(yearDividendRate);
                     }
                     yearDividendRateMap.put(year, yearDividendRate);
-                    if (year == thePreviousYear) {
-                        if (!cashDividend.equals("-")) {
-                            thePreviousYearDividend = thePreviousYearDividend.add(new BigDecimal(cashDividend));
-                        }
-                        if (!cashDividend.equals("-")) {
-                            thePreviousYearDividend = thePreviousYearDividend.add(new BigDecimal(stockDividend));
-                        }
-                    }
                 }
             }
-
-            if (yearDividendRateMap.get(thePreviousYear) != null) {
-                stockDO.setThePreviousYearDividendRate(yearDividendRateMap.get(thePreviousYear));
-            } else {
-                stockDO.setThePreviousYearDividendRate(new BigDecimal("0"));
-            }
-            if (yearDividendRateMap.get(thePastTwoYear) != null) {
-                stockDO.setThePastTwoYearDividendRate(yearDividendRateMap.get(thePastTwoYear));
-            } else {
-                stockDO.setThePastTwoYearDividendRate(new BigDecimal("0"));
-            }
-            if (yearDividendRateMap.get(thePastThreeYear) != null) {
-                stockDO.setThePastThreeYearDividendRate(yearDividendRateMap.get(thePastThreeYear));
-            } else {
-                stockDO.setThePastThreeYearDividendRate(new BigDecimal("0"));
-            }
-
-            BigDecimal currentYearDividendRate = yearDividendRateMap.get(currentYear);
-            if (currentYearDividendRate == null) {
-                currentYearDividendRate = thePreviousYearDividend.multiply(BigDecimal.valueOf(100)).divide(stockDO.getPrice(), 2, RoundingMode.CEILING);
-            }
-            stockDO.setCurrentDividendRate(currentYearDividendRate);
         } catch (Exception e) {
-            System.out.println("error stock id = " + stockDO.getId());
             e.printStackTrace();
         }
+        List<DividendDo> list = new ArrayList<>();
+        int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+        for(Integer key: yearDividendMap.keySet()) {
+            DividendDo dividendDo = new DividendDo();
+            BigDecimal yearDividend = yearDividendMap.get(key);
+            BigDecimal yearDividendRate = yearDividendRateMap.get(key);
+            dividendDo.setYear(key);
+            dividendDo.setDividend(yearDividend);
+            dividendDo.setDividendRate(yearDividendRate);
+            list.add(dividendDo);
+        }
+
+        list.sort(new Comparator<DividendDo>() {
+            @Override
+            public int compare(DividendDo o1, DividendDo o2) {
+                return o2.getYear() - o1.getYear();
+            }
+        });
+        return list;
     }
 
     public List<RevenueDo> revenue(String stockCode) {
         List<RevenueDo> revenueList = new ArrayList<>();
         String url = "https://tw.stock.yahoo.com/quote/" + stockCode + "/revenue";
+        System.out.println("url = " + url);
         try {
             Document document = Jsoup.connect(url).get();
             Elements revenueContentElements = document.getElementsByClass("M(0) P(0) List(n)");
@@ -109,21 +123,18 @@ public class JsoupWorker {
             if (revenueContentElements.size() != 0) {
                 Element ulElement = revenueContentElements.get(0);
                 Elements liElements = ulElement.getElementsByClass("List(n)");
-//                System.out.println("liElements.size(): " + liElements.size());
-                int i = 0;
                 for (Element liElement : liElements) {
-//                    System.out.println("i: " + i);
                     Elements dateElements = liElement.getElementsByClass("W(65px) Ta(start)");
+                    if(dateElements.size() == 0) {
+                        continue;
+                    }
                     RevenueDo revenueDo = new RevenueDo();
                     String dateString = dateElements.get(0).text();
-//                    System.out.println("date: " + dateString);
                     revenueDo.setDate(simpleDateFormat.parse(dateString));
-
                     Element singleMonthElement = liElement.getElementsByTag("ul").get(0);
                     String revenue = singleMonthElement.getElementsByTag("li").get(0).
                             getElementsByTag("span").get(0).text().
                             replace(",", "");
-//                    System.out.println("revenue: " + revenue);
                     revenueDo.setRevenue(new BigDecimal(revenue));
                     revenueList.add(revenueDo);
                 }
@@ -131,7 +142,9 @@ public class JsoupWorker {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        revenueList.remove(0);
+        if (revenueList.size() > 0) {
+            revenueList.remove(0);
+        }
         return revenueList;
     }
 }

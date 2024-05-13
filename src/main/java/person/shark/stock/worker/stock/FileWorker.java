@@ -1,20 +1,45 @@
 package person.shark.stock.worker.stock;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import person.shark.stock.pojo.DividendDo;
 import person.shark.stock.pojo.RevenueDo;
 import person.shark.stock.pojo.StockDo;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class ExcelWorker {
-    public void saveToExcel(String fileName, List<StockDo> stockList) {
+public class FileWorker {
+
+    public void saveToJson(String fileName, List<StockDo> stockList) {
+        String json = new Gson().toJson(stockList);
+        String path = "file/" + fileName;
+        try {
+            Files.write(Paths.get(path), json.getBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<StockDo> loadFromJson(String fileName) {
+        String path = "file/" + fileName;
+        try {
+            String json = Files.readString(Paths.get(path));
+            return new Gson().fromJson(json, new TypeToken<List<StockDo>>(){}.getType());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public void saveToDividendExcel(String fileName, List<StockDo> stockList) {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet();
 
@@ -23,9 +48,9 @@ public class ExcelWorker {
         int thePastTwoYear = currentYear - 2;
         int thePastThreeYear = currentYear - 3;
 
-        List<String> titleList = List.of("Id", "Company", "Price", currentYear + " Dividend Rate",
-                thePreviousYear + " Dividend Rate", thePastTwoYear + " Dividend Rate",
-                thePastThreeYear + " Dividend Rate");
+        List<String> titleList = List.of("Id", "Company", "Price", currentYear + " Dividend",
+                thePreviousYear + " Dividend", thePastTwoYear + " Dividend",
+                thePastThreeYear + " Dividend");
         Row titleRow = sheet.createRow(0);
         for (int i = 0; i < titleList.size(); i++) {
             Cell cell = titleRow.createCell(i);
@@ -35,7 +60,14 @@ public class ExcelWorker {
         int rowIndex = 1;
         for (StockDo stock : stockList) {
             Row row = sheet.createRow(rowIndex);
-            System.out.println(new Gson().toJson(stock));
+            HashMap<Integer, BigDecimal> yearDividendMap = new HashMap<>();
+            List<DividendDo> dividendDoList = stock.getDividendList();
+            for(DividendDo dividendDo: dividendDoList) {
+                Integer year = dividendDo.getYear();
+                BigDecimal dividend = dividendDo.getDividend();
+                yearDividendMap.put(year, dividend);
+            }
+
             for(int i = 0; i < titleList.size(); i ++) {
                 Cell cell = row.createCell(i);
                 switch (i) {
@@ -49,16 +81,33 @@ public class ExcelWorker {
                         cell.setCellValue(stock.getPrice().doubleValue());
                         break;
                     case 3:
-                        cell.setCellValue(stock.getCurrentDividendRate().doubleValue());
+                        if(yearDividendMap.get(currentYear) != null) {
+                            cell.setCellValue(yearDividendMap.get(currentYear).doubleValue());
+                        } else {
+                            cell.setCellValue(0);
+                        }
                         break;
                     case 4:
-                        cell.setCellValue(stock.getThePreviousYearDividendRate().doubleValue());
+
+                        if(yearDividendMap.get(thePreviousYear) != null) {
+                            cell.setCellValue(yearDividendMap.get(thePreviousYear).doubleValue());
+                        } else {
+                            cell.setCellValue(0);
+                        }
                         break;
                     case 5:
-                        cell.setCellValue(stock.getThePastTwoYearDividendRate().doubleValue());
+                        if(yearDividendMap.get(thePastTwoYear) != null) {
+                            cell.setCellValue(yearDividendMap.get(thePastTwoYear).doubleValue());
+                        } else {
+                            cell.setCellValue(0);
+                        }
                         break;
                     case 6:
-                        cell.setCellValue(stock.getThePastThreeYearDividendRate().doubleValue());
+                        if(yearDividendMap.get(thePastThreeYear) != null) {
+                            cell.setCellValue(yearDividendMap.get(thePastThreeYear).doubleValue());
+                        } else {
+                            cell.setCellValue(0);
+                        }
                         break;
                 }
             }
@@ -76,57 +125,6 @@ public class ExcelWorker {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public List<StockDo> loadFromToExcel(String fileName) {
-        List<StockDo> stockDoList = new ArrayList<>();
-        try(Workbook workbook = WorkbookFactory.create(new File(fileName))) {
-            Sheet sheet = workbook.getSheetAt(0);
-            Iterator<Row> rowIterator = sheet.rowIterator();
-            int i = 0;
-            while (rowIterator.hasNext()) {
-                Row row = rowIterator.next();
-                if(i == 0 ) {
-                    i ++;
-                    continue;
-                }
-                Iterator<Cell> cellIterator = row.cellIterator();
-                StockDo stockDo = new StockDo();
-                int j = 0;
-                while (cellIterator.hasNext()) {
-                    Cell cell = cellIterator.next();
-                    switch (j) {
-                        case 0:
-                            stockDo.setId(cell.getStringCellValue());
-                            break;
-                        case 1:
-                            stockDo.setName(cell.getStringCellValue());
-                            break;
-                        case 2:
-                            stockDo.setPrice(BigDecimal.valueOf(cell.getNumericCellValue()));
-                            break;
-                        case 3:
-                            stockDo.setCurrentDividendRate(BigDecimal.valueOf(cell.getNumericCellValue()));
-                            break;
-                        case 4:
-                            stockDo.setThePreviousYearDividendRate(BigDecimal.valueOf(cell.getNumericCellValue()));
-                            break;
-                        case 5:
-                            stockDo.setThePastTwoYearDividendRate(BigDecimal.valueOf(cell.getNumericCellValue()));
-                            break;
-                        case 6:
-                            stockDo.setThePastThreeYearDividendRate(BigDecimal.valueOf(cell.getNumericCellValue()));
-                            break;
-                    }
-                    j++;
-                }
-                stockDoList.add(stockDo);
-                i ++;
-            }
-        } catch (IOException e) {
-            return stockDoList;
-        }
-        return stockDoList;
     }
 
     public void generateRevenueExcel(String stockCode, int statisticsYearCount, List<RevenueDo> revenueDoList) {

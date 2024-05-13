@@ -1,10 +1,10 @@
-package person.shark.stock;
+package person.shark.stock.worker.stock;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-public class Regression {
+public class RegressionWorker {
     public static void main(String[] argv) {
         List<BigDecimal> xList = List.of(
                 new BigDecimal("1"), new BigDecimal("2"), new BigDecimal("3"));
@@ -12,7 +12,7 @@ public class Regression {
         List<BigDecimal> yList = List.of(
                 new BigDecimal("6"), new BigDecimal("4"), new BigDecimal("2"));
 
-        BigDecimal slope = new Regression().calculateRegressionSlope(xList, yList);
+        BigDecimal slope = new RegressionWorker().calculateRegressionSlope(xList, yList);
         System.out.println("slope = " + slope.doubleValue());
     }
 
