@@ -24,16 +24,16 @@ public class FilterWorker {
         }).collect(Collectors.toList());
     }
 
-    public List<StockDo> filterByRevenueRegression(List<StockDo> stockDoList, int nMonth, int mMonth, int nSlopeCondition, int mSlopeCondition) {
+    public List<StockDo> filterByRevenueRegressionNm(List<StockDo> stockDoList, int nMonth, int mMonth, int nSlopeCondition, int mSlopeCondition) {
         return stockDoList.stream().filter((stockDo) -> {
             List<RevenueDo> revenueDoList = stockDo.getRevenueList();
-            boolean isMeetRevenueRegressionCondition = isMeetRevenueRegressionCondition(revenueDoList, nMonth, mMonth, nSlopeCondition, mSlopeCondition);
+            boolean isMeetRevenueRegressionCondition = isMeetRevenueRegressionConditionNm(revenueDoList, nMonth, mMonth, nSlopeCondition, mSlopeCondition);
             System.out.println("stockId = " + stockDo.getId() + ", isMeetRevenueRegressionCondition = " + isMeetRevenueRegressionCondition);
             return isMeetRevenueRegressionCondition;
         }).collect(Collectors.toList());
     }
 
-    public boolean isMeetRevenueRegressionCondition(List<RevenueDo> revenueList, int nMonth, int mMonth, int nSlopeCondition, int mSlopeCondition ) {
+    public boolean isMeetRevenueRegressionConditionNm(List<RevenueDo> revenueList, int nMonth, int mMonth, int nSlopeCondition, int mSlopeCondition ) {
         int totalMonth = nMonth + mMonth;
         if(revenueList.size() < (totalMonth + 12)) {
             return false;
@@ -93,16 +93,16 @@ public class FilterWorker {
         return (nSlope.compareTo(new BigDecimal(nSlopeCondition)) > 0) && (mSlope.compareTo(new BigDecimal(mSlopeCondition)) <= 0);
     }
 
-    public List<StockDo> filterByRevenueRegression(List<StockDo> stockDoList, int calculateMonthCount) {
+    public List<StockDo> filterByRevenueRegressionN(List<StockDo> stockDoList, int calculateMonthCount) {
         return stockDoList.stream().filter((stockDo) -> {
             List<RevenueDo> revenueDoList = stockDo.getRevenueList();
-            boolean isMeetRevenueRegressionCondition = isMeetRevenueRegressionCondition(revenueDoList, calculateMonthCount);
+            boolean isMeetRevenueRegressionCondition = isMeetNmRevenueRegressionConditionN(revenueDoList, calculateMonthCount);
             System.out.println("stockId = " + stockDo.getId() + ", isMeetRevenueRegressionCondition = " + isMeetRevenueRegressionCondition);
             return isMeetRevenueRegressionCondition;
         }).collect(Collectors.toList());
     }
 
-    public boolean isMeetRevenueRegressionCondition(List<RevenueDo> revenueList, int calculateMonthCount) {
+    public boolean isMeetNmRevenueRegressionConditionN(List<RevenueDo> revenueList, int calculateMonthCount) {
 
         if(revenueList.size() < (calculateMonthCount + 12)) {
             return false;

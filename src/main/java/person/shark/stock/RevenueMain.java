@@ -18,8 +18,5 @@ public class RevenueMain {
         System.out.println("revenueDoList: " + new Gson().toJson(revenueDoList));
         FileWorker fileWorker = new FileWorker();
         fileWorker.generateRevenueExcel(stockCode, 5, revenueDoList);
-        FilterWorker filterWorker = new FilterWorker();
-        boolean isMeetRevenueRegressionCondition = filterWorker.isMeetRevenueRegressionCondition(revenueDoList, 3, 9, 0, 0);
-        System.out.println("isMeetRevenueRegressionCondition = " + isMeetRevenueRegressionCondition);
     }
 }
