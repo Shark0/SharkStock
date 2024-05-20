@@ -203,4 +203,98 @@ public class FileWorker {
         }
 
     }
+
+    public void generateRevenueRegressionNExcel(String fileName, List<StockDo> stockList) {
+        try(Workbook workbook = new XSSFWorkbook()) {
+            List<String> titleList = List.of("Id", "Company", "Price", "N Slope");
+            Sheet sheet = workbook.createSheet();
+            Row titleRow = sheet.createRow(0);
+            for (int i = 0; i < titleList.size(); i++) {
+                Cell cell = titleRow.createCell(i);
+                cell.setCellValue(titleList.get(i));
+            }
+
+            int rowIndex = 1;
+            for (StockDo stock : stockList) {
+                Row row = sheet.createRow(rowIndex);
+                for(int i = 0; i < titleList.size(); i ++) {
+                    Cell cell = row.createCell(i);
+                    switch (i) {
+                        case 0:
+                            cell.setCellValue(stock.getId());
+                            break;
+                        case 1:
+                            cell.setCellValue(stock.getName());
+                            break;
+                        case 2:
+                            cell.setCellValue(stock.getPrice().doubleValue());
+                            break;
+                        case 3:
+                            cell.setCellValue(stock.getNSlope().doubleValue());
+                            break;
+
+                    }
+                }
+                rowIndex = rowIndex + 1;
+            }
+
+            try (FileOutputStream fileOutputStream = new FileOutputStream("file/" + fileName)){
+                workbook.write(fileOutputStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void generateRevenueRegressionNmExcel(String fileName, List<StockDo> stockList) {
+        try(Workbook workbook = new XSSFWorkbook()) {
+            List<String> titleList = List.of("Id", "Company", "Price", "N Slope", "M Slope");
+            Sheet sheet = workbook.createSheet();
+            Row titleRow = sheet.createRow(0);
+            for (int i = 0; i < titleList.size(); i++) {
+                Cell cell = titleRow.createCell(i);
+                cell.setCellValue(titleList.get(i));
+            }
+
+            int rowIndex = 1;
+            for (StockDo stock : stockList) {
+                Row row = sheet.createRow(rowIndex);
+                for(int i = 0; i < titleList.size(); i ++) {
+                    Cell cell = row.createCell(i);
+                    switch (i) {
+                        case 0:
+                            cell.setCellValue(stock.getId());
+                            break;
+                        case 1:
+                            cell.setCellValue(stock.getName());
+                            break;
+                        case 2:
+                            cell.setCellValue(stock.getPrice().doubleValue());
+                            break;
+                        case 3:
+                            cell.setCellValue(stock.getNSlope().doubleValue());
+                            break;
+                        case 4:
+                            cell.setCellValue(stock.getMSlope().doubleValue());
+                            break;
+
+                    }
+                }
+                rowIndex = rowIndex + 1;
+            }
+
+            try (FileOutputStream fileOutputStream = new FileOutputStream("file/" + fileName)){
+                workbook.write(fileOutputStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }
