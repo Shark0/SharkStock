@@ -7,7 +7,7 @@ import person.shark.stock.worker.stock.FilterWorker;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class StockRevenueRegressionNm {
+public class FilterStockByRevenueRegressionNm {
     public static void main(String[] argv) {
         FileWorker fileWorker = new FileWorker();
         List<StockDo> stockDoList = fileWorker.loadFromJson("all_stock.json");

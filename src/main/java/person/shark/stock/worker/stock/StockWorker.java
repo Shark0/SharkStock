@@ -2,6 +2,7 @@ package person.shark.stock.worker.stock;
 
 import com.opencsv.CSVReader;
 import person.shark.stock.pojo.DividendDo;
+import person.shark.stock.pojo.EpsDo;
 import person.shark.stock.pojo.RevenueDo;
 import person.shark.stock.pojo.StockDo;
 import person.shark.stock.util.StringUtil;
@@ -42,6 +43,8 @@ public class StockWorker {
                     stock.setDividendList(divideList);
                     List<RevenueDo> revenueList = jsoupWorker.revenue(stockId);
                     stock.setRevenueList(revenueList);
+                    List<EpsDo> epsList = jsoupWorker.eps(stockId, 5);
+                    stock.setEpsList(epsList);
                     stockList.add(stock);
                 }
                 index++;

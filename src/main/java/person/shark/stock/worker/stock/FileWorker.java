@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import person.shark.stock.pojo.DividendDo;
+import person.shark.stock.pojo.EpsDo;
 import person.shark.stock.pojo.RevenueDo;
 import person.shark.stock.pojo.StockDo;
 
@@ -297,4 +298,115 @@ public class FileWorker {
         }
     }
 
+    public void saveToEpsPriceRatioExcel(String fileName, List<StockDo> stockList) {
+        try(Workbook workbook = new XSSFWorkbook()) {
+            List<String> titleList = List.of("Id", "Company", "Price", "Eps", "Eps Price Ratio");
+            Sheet sheet = workbook.createSheet();
+            Row titleRow = sheet.createRow(0);
+            for (int i = 0; i < titleList.size(); i++) {
+                Cell cell = titleRow.createCell(i);
+                cell.setCellValue(titleList.get(i));
+            }
+
+            int rowIndex = 1;
+            for (StockDo stock : stockList) {
+                Row row = sheet.createRow(rowIndex);
+                for(int i = 0; i < titleList.size(); i ++) {
+                    Cell cell = row.createCell(i);
+                    switch (i) {
+                        case 0:
+                            cell.setCellValue(stock.getId());
+                            break;
+                        case 1:
+                            cell.setCellValue(stock.getName());
+                            break;
+                        case 2:
+                            cell.setCellValue(stock.getPrice().doubleValue());
+                            break;
+                        case 3:
+                            cell.setCellValue(generateEpsText(stock.getEpsList()));
+                            break;
+                        case 4:
+                            cell.setCellValue(stock.getEpsPriceRatio().doubleValue());
+                            break;
+
+                    }
+                }
+                rowIndex = rowIndex + 1;
+            }
+
+            try (FileOutputStream fileOutputStream = new FileOutputStream("file/" + fileName)){
+                workbook.write(fileOutputStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String generateEpsText(List<EpsDo> epsDoList) {
+        StringBuilder stringBuilder = new StringBuilder();
+        int index = 0;
+        for(EpsDo epsDo : epsDoList) {
+            if(index > 0) {
+                stringBuilder.append(", ");
+            }
+            stringBuilder.append(epsDo.getYear()).append(": ").append(epsDo.getEps());
+            index ++;
+        }
+        return stringBuilder.toString();
+    }
+
+    public void saveToEpsPriceRatioAndRevenueRegressionNExcel(String fileName, List<StockDo> stockList) {
+        try(Workbook workbook = new XSSFWorkbook()) {
+            List<String> titleList = List.of("Id", "Company", "Price", "Eps", "Eps Price Ratio", "N Slope");
+            Sheet sheet = workbook.createSheet();
+            Row titleRow = sheet.createRow(0);
+            for (int i = 0; i < titleList.size(); i++) {
+                Cell cell = titleRow.createCell(i);
+                cell.setCellValue(titleList.get(i));
+            }
+
+            int rowIndex = 1;
+            for (StockDo stock : stockList) {
+                Row row = sheet.createRow(rowIndex);
+                for(int i = 0; i < titleList.size(); i ++) {
+                    Cell cell = row.createCell(i);
+                    switch (i) {
+                        case 0:
+                            cell.setCellValue(stock.getId());
+                            break;
+                        case 1:
+                            cell.setCellValue(stock.getName());
+                            break;
+                        case 2:
+                            cell.setCellValue(stock.getPrice().doubleValue());
+                            break;
+                        case 3:
+                            cell.setCellValue(generateEpsText(stock.getEpsList()));
+                            break;
+                        case 4:
+                            cell.setCellValue(stock.getEpsPriceRatio().doubleValue());
+                            break;
+                        case 5:
+                            cell.setCellValue(stock.getNSlope().doubleValue());
+                            break;
+
+                    }
+                }
+                rowIndex = rowIndex + 1;
+            }
+
+            try (FileOutputStream fileOutputStream = new FileOutputStream("file/" + fileName)){
+                workbook.write(fileOutputStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

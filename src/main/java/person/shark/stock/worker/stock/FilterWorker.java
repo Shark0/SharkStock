@@ -219,4 +219,19 @@ public class FilterWorker {
         return revenueRegressionNDo;
     }
 
+    public List<StockDo> filterAndSortByEpsPriceRatio(List<StockDo> stockDoList, BigDecimal epsPriceRatioCondition) {
+        List<StockDo> resultList = new ArrayList<>();
+        for(StockDo stockDo: stockDoList) {
+            BigDecimal epsPriceRatio = new BigDecimal(0);
+            if(stockDo.getEpsList() != null && !stockDo.getEpsList().isEmpty()) {
+                epsPriceRatio = stockDo.getEpsList().get(0).getEps().divide(stockDo.getPrice(), 4, RoundingMode.HALF_DOWN);
+            }
+            stockDo.setEpsPriceRatio(epsPriceRatio);
+            if(epsPriceRatio.compareTo(epsPriceRatioCondition) > 0) {
+                resultList.add(stockDo);
+            }
+        }
+        resultList.sort((o1, o2) -> o2.getEpsPriceRatio().compareTo(o1.getEpsPriceRatio()));
+        return resultList;
+    }
 }

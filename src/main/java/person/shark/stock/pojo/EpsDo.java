@@ -3,10 +3,8 @@ package person.shark.stock.pojo;
 import lombok.Data;
 
 import java.math.BigDecimal;
-
 @Data
-public class DividendDo {
+public class EpsDo {
     private Integer year;
-    private BigDecimal dividend;
-    private BigDecimal dividendRate;
+    private BigDecimal eps;
 }
