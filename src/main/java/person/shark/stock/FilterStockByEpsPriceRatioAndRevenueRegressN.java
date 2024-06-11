@@ -12,12 +12,10 @@ public class FilterStockByEpsPriceRatioAndRevenueRegressN {
         FileWorker fileWorker = new FileWorker();
         List<StockDo> stockDoList = fileWorker.loadFromJson("all_stock.json");
         FilterWorker filterWorker = new FilterWorker();
-        List<StockDo> filterResultList = filterWorker.filterAndSortByEpsPriceRatio(
-                stockDoList, new BigDecimal("0"));
-        if(filterResultList.size() > 100) {
-            filterResultList = filterResultList.subList(0, 200);
-        }
-        filterResultList = filterWorker.filterByRevenueRegressionN(filterResultList, 3, new BigDecimal("30"));
+        List<StockDo> filterResultList  = filterWorker.filterByRevenueRegressionN(stockDoList, 3, new BigDecimal("80"));
+        System.out.println("filterResultList size: " + filterResultList.size());
+        filterResultList = filterWorker.filterAndSortByEpsPriceRatio(filterResultList, new BigDecimal("0.05"));
+        System.out.println("filterResultList size: " + filterResultList.size());
         fileWorker.saveToEpsPriceRatioAndRevenueRegressionNExcel("all_stock_eps_price_ratio_revenue_slot.xlsx", filterResultList);
     }
 }

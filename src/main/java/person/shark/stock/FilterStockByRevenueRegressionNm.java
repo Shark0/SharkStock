@@ -14,7 +14,7 @@ public class FilterStockByRevenueRegressionNm {
         FilterWorker filterWorker = new FilterWorker();
         List<StockDo> revenueList =
                 filterWorker.filterByRevenueRegressionNm(
-                        stockDoList, 3, 9, new BigDecimal("0"), new BigDecimal("0"));
+                        stockDoList, 3, 9, new BigDecimal("50"), new BigDecimal("0"));
         fileWorker.generateRevenueRegressionNmExcel("revenue_regression_nm.xlsx", revenueList);
     }
 }

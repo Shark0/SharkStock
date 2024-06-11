@@ -39,6 +39,59 @@ public class FileWorker {
         }
     }
 
+    public void saveToStockExcel(String fileName, List<StockDo> stockList) {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet();
+
+
+        List<String> titleList = List.of("Id", "Company", "Price");
+        Row titleRow = sheet.createRow(0);
+        for (int i = 0; i < titleList.size(); i++) {
+            Cell cell = titleRow.createCell(i);
+            cell.setCellValue(titleList.get(i));
+        }
+
+        int rowIndex = 1;
+        for (StockDo stock : stockList) {
+            Row row = sheet.createRow(rowIndex);
+            HashMap<Integer, BigDecimal> yearDividendMap = new HashMap<>();
+            List<DividendDo> dividendDoList = stock.getDividendList();
+            for(DividendDo dividendDo: dividendDoList) {
+                Integer year = dividendDo.getYear();
+                BigDecimal dividend = dividendDo.getDividend();
+                yearDividendMap.put(year, dividend);
+            }
+
+            for(int i = 0; i < titleList.size(); i ++) {
+                Cell cell = row.createCell(i);
+                switch (i) {
+                    case 0:
+                        cell.setCellValue(stock.getId());
+                        break;
+                    case 1:
+                        cell.setCellValue(stock.getName());
+                        break;
+                    case 2:
+                        cell.setCellValue(stock.getPrice().doubleValue());
+                        break;
+                }
+            }
+            rowIndex = rowIndex + 1;
+        }
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream("file/" + fileName)){
+            workbook.write(fileOutputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            workbook.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     public void saveToDividendExcel(String fileName, List<StockDo> stockList) {
         Workbook workbook = new XSSFWorkbook();

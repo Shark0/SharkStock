@@ -40,7 +40,7 @@ public class FilterWorker {
                         (stockDo.getNSlope().compareTo(nSlopeCondition) > 0) &&
                         (stockDo.getMSlope().compareTo(mSlopeCondition) <= 0))
                 .collect(Collectors.toList());
-
+        Collections.sort(stockDoList, Collections.reverseOrder(Comparator.comparing(StockDo::getNSlope)));
         return stockDoList;
     }
 
@@ -152,6 +152,7 @@ public class FilterWorker {
             stockDo.setTotalNDeviationRevenue(revenueRegressionNDo.getTotalNDeviationRevenue());
         }
         stockDoList = stockDoList.stream().filter((stockDo) -> (stockDo.getNSlope().compareTo(nSlopeCondition) > 0)).collect(Collectors.toList());
+        Collections.sort(stockDoList, Collections.reverseOrder(Comparator.comparing(StockDo::getNSlope)));
         return stockDoList;
     }
 
@@ -232,6 +233,31 @@ public class FilterWorker {
             }
         }
         resultList.sort((o1, o2) -> o2.getEpsPriceRatio().compareTo(o1.getEpsPriceRatio()));
+        return resultList;
+    }
+
+    public List<StockDo> filterByMaxRevenue(List<StockDo> stockDoList, int staticsMonthCount) {
+        List<StockDo> resultList = new ArrayList<>();
+        for(StockDo stockDo: stockDoList) {
+            BigDecimal staticsMonthMaxRevenue = new BigDecimal(0);
+            BigDecimal maxRevenue = new BigDecimal(0);
+            int i = 0;
+            for(RevenueDo revenueDo : stockDo.getRevenueList()) {
+                if(i < staticsMonthCount) {
+                    if(revenueDo.getRevenue().compareTo(staticsMonthMaxRevenue) > 0) {
+                        staticsMonthMaxRevenue = revenueDo.getRevenue();
+                    }
+                } else {
+                    if(revenueDo.getRevenue().compareTo(maxRevenue) > 0) {
+                        maxRevenue = revenueDo.getRevenue();
+                    }
+                }
+                i ++;
+            }
+            if(staticsMonthMaxRevenue.compareTo(maxRevenue) > 0) {
+                resultList.add(stockDo);
+            }
+        }
         return resultList;
     }
 }
